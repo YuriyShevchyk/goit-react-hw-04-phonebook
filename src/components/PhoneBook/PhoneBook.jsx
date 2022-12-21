@@ -1,61 +1,53 @@
 import { nanoid } from 'nanoid';
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import FormAddContacts from './Form/Form';
 import PhoneBookList from './ContactList/ContactList';
 import Filter from './Filter/Filter';
 import { Container } from './PhoneBook.styled';
 
-export default class PhoneBook extends Component {
-  state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
-  };
+const useLocalStorage = (key, defaultValue) => {
+  const [state, setState] = useState(()=> {
+    return JSON.parse(localStorage.getItem(key))?? defaultValue
+  });
 
-  componentDidMount() {
-    const contacts = JSON.parse(localStorage.getItem('contacts'));
-    if (contacts?.length > 0) {
-      this.setState({contacts});
-    }
-  }
+  useEffect(()=> {
+    localStorage.setItem(key, JSON.stringify(state));
 
-  componentDidUpdate(prevProps, prevState){
-    const { contacts } = this.state;
-    if (contacts !== prevState.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(contacts));
-    }
-  }
+  },[key, state]);
+  return [state, setState];
+};
 
 
-  addContact = data => {
-    if (this.isDuplicate(data)) {
+export default function PhoneBook()  {
+  const [filter, setFilter] = useState('');
+  const [contacts, setContacts] = useLocalStorage('contacst',[]);
+    // contacts: [
+    //   { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
+    //   { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
+    //   { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
+    //   { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
+    // ]
+
+  const addContact = data => {
+    if (isDuplicate(data)) {
       return alert(`${data.name} is alreay in contacts.`);
     }
-    this.setState(prev => {
+    setContacts(prev => {
       const newContact = {
         id: nanoid(),
         ...data,
       };
-      return {
-        contacts: [...prev.contacts, newContact],
-      };
+      return  [...prev, newContact];
+      
     });
   };
 
-  handleChange = e => {
-    const { name, value } = e.target;
-    this.setState({
-      [name]: value,
-    });
+  const handleChange = e => {
+    const value = e.target.value;
+    setFilter(value);
   };
 
-  getFilteredContacts() {
-    const { contacts, filter } = this.state;
-
+  const getFilteredContacts=()=> {
     if (!filter) {
       return contacts;
     }
@@ -72,29 +64,23 @@ export default class PhoneBook extends Component {
     return filteredContacts;
   }
 
-  removeContact = id => {
-    this.setState(prev => {
-      const newContacts = prev.contacts.filter(item => item.id !== id);
-      return {
-        contacts: newContacts,
-      };
+  const removeContact = id => {
+    setContacts(prev => {
+      const newContacts = prev.filter(item => item.id !== id);
+      return newContacts;
     });
   };
 
-  isDuplicate({ name, number }) {
-    const { contacts } = this.state;
+  const isDuplicate=({ name, number }) =>{
     const result = contacts.find(
       item => item.name === name && item.number === number
     );
     return result;
-  }
+  };
 
-  render() {
-    const { addContact, handleChange, removeContact } = this;
-    const { filter } = this.state;
-    const contacts = this.getFilteredContacts();
+  const filteredContacts = getFilteredContacts();
 
-    return (
+  return (
       <Container>
         <div className="block">
           <h1>PhoneBook</h1>
@@ -103,9 +89,8 @@ export default class PhoneBook extends Component {
         <div className="block">
           <h2>Contacts</h2>
           <Filter filter={filter} handleChange={handleChange} />
-          <PhoneBookList items={contacts} removeContact={removeContact} />
+          <PhoneBookList items={filteredContacts} removeContact={removeContact} />
         </div>
       </Container>
-    );
-  }
-}
+  );
+};
