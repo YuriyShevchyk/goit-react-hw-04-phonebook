@@ -20,7 +20,7 @@ const useLocalStorage = (key, defaultValue) => {
 
 export default function PhoneBook()  {
   const [filter, setFilter] = useState('');
-  const [contacts, setContacts] = useLocalStorage('contacst',[]);
+  const [contacts, setContacts] = useLocalStorage('contacts',[]);
     // contacts: [
     //   { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
     //   { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
